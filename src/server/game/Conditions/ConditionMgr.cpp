@@ -130,7 +130,91 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
             {
                 QuestStatus status = player->GetQuestStatus(ConditionValue1);
                 condMeets = (status == QUEST_STATUS_INCOMPLETE);
-            }
+				// LASYAN : allows loot of quest items even if the player does not have the quest yet
+				if (sWorld->getBoolConfig(CONFIG_DROP_QUEST_ITEMS) && SourceType == CONDITION_SOURCE_TYPE_CREATURE_LOOT_TEMPLATE
+					&& status == QUEST_STATUS_NONE){
+					Quest const* qInfo = sObjectMgr->GetQuestTemplate(ConditionValue1);
+					if (!qInfo)
+						break;
+
+					if (!qInfo->IsRepeatable() && player->getRewardedQuests().find(ConditionValue1) != player->getRewardedQuests().end())
+						break; // not allow re-complete quest
+
+					// auto complete quest
+					/*if ((qInfo->IsAutoComplete() || qInfo->GetFlags() & QUEST_FLAGS_AUTOCOMPLETE) && player->CanTakeQuest(qInfo, false))
+					{
+					condMeets = true;
+					break;
+					}*/
+
+					if (qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_DELIVER))
+					{
+						for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; i++)
+						{
+							if (qInfo->RequiredItemId[i] != SourceEntry)
+								continue;
+
+							if (qInfo->RequiredItemCount[i] != 0 && player->GetItemCount(SourceEntry, false) < qInfo->RequiredItemCount[i])
+							{
+								condMeets = true;
+								ItemTemplate const * it = sObjectMgr->GetItemTemplate(SourceEntry);
+								std::ostringstream msg;
+								msg << it->Name1 << " (" << (player->GetItemCount(SourceEntry, false) + 1) << "/" << qInfo->RequiredItemCount[i] << ") ";
+
+								// Get previous quest
+								while (qInfo->prevQuests.size() > 0)
+								{
+									Quest::PrevQuests::const_iterator iter = qInfo->prevQuests.begin();
+									if (player->GetQuestStatus(*iter) == QUEST_STATUS_REWARDED)
+										break;
+									qInfo = sObjectMgr->GetQuestTemplate(*iter);
+								}
+
+								msg << "\r\n" << qInfo->GetTitle();
+								std::ostringstream sql;
+								sql << "SELECT ct.name, c.map, c.position_x, c.position_y, c.position_z FROM creature c"
+									<< " INNER JOIN creature_queststarter s ON s.id = c.id"
+									<< " INNER JOIN creature_template ct ON ct.entry = c.id"
+									<< " WHERE s.quest = %d";
+								QueryResult result = WorldDatabase.PQuery(sql.str().c_str(), qInfo->GetQuestId());
+								if (result && result->GetRowCount() > 0)
+								{
+									std::string _creature_name = (*result)[0].GetString();
+									uint32 _map_id = (*result)[1].GetUInt32();
+									float _pos_x = (*result)[2].GetFloat();
+									float _pos_y = (*result)[3].GetFloat();
+									float _pos_z = (*result)[4].GetFloat();
+
+									msg << "\r\n" << _creature_name;
+									Map* map = sMapMgr->CreateBaseMap(_map_id);
+									if (map)
+									{
+										AreaTableEntry const* area = GetAreaEntryByAreaID(map->GetAreaId(_pos_x, _pos_y, _pos_z));
+										AreaTableEntry const* zone = GetAreaEntryByAreaID(map->GetZoneId(_pos_x, _pos_y, _pos_z));
+										if (area) msg << " - " << area->area_name[sObjectMgr->GetDBCLocaleIndex()];
+										if (zone && stricmp(zone->area_name[sObjectMgr->GetDBCLocaleIndex()], area->area_name[sObjectMgr->GetDBCLocaleIndex()]) != 0)
+											msg << " (" << zone->area_name[sObjectMgr->GetDBCLocaleIndex()] << ")";
+									}
+								}
+								player->IdQuestItemAdded = SourceEntry;
+								player->MsgQuestItemAdded = msg.str();
+							}
+						}
+					}
+
+					/*if (qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_KILL | QUEST_SPECIAL_FLAGS_CAST | QUEST_SPECIAL_FLAGS_SPEAKTO))
+					{
+					for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; i++)
+					{
+					if (qInfo->RequiredNpcOrGo[i] != ConditionValue2)
+					continue;
+
+					if (qInfo->RequiredNpcOrGoCount[i] != 0 && player->GetItemCount(ConditionValue2, false) < qInfo->RequiredNpcOrGoCount[i])
+					condMeets = true;
+					}
+					}*/
+				}
+			}
             break;
         }
         case CONDITION_QUEST_COMPLETE:
@@ -148,7 +232,7 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
             {
                 QuestStatus status = player->GetQuestStatus(ConditionValue1);
                 condMeets = (status == QUEST_STATUS_NONE);
-            }
+			}
             break;
         }
         case CONDITION_ACTIVE_EVENT:

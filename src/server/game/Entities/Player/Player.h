@@ -2299,6 +2299,8 @@ class Player : public Unit, public GridObject<Player>
         std::string GetMapAreaAndZoneString();
         std::string GetCoordsMapAreaAndZoneString();
 
+		std::string MsgQuestItemAdded;
+		int32 IdQuestItemAdded;
 		uint32 m_mountSpell;
 		bool m_mountCanceled;
 
