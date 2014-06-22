@@ -1399,7 +1399,14 @@ bool Creature::CanStartAttack(Unit const* who, bool force) const
             return false;
     }
 
-    if (!CanCreatureAttack(who, force))
+	if (who->m_ControlledByPlayer && sWorld->getBoolConfig(CONFIG_NO_GREY_AGGRO)) { //LASYAN: no aggro for grey creatures
+		uint32 playerlevel = who->getLevelForTarget(this);
+		uint32 creaturelevel = getLevelForTarget(who);
+		if (Trinity::XP::GetColorCode(playerlevel, creaturelevel) == XP_GRAY)
+			return false;
+	}
+
+	if (!CanCreatureAttack(who, force))
         return false;
 
     return IsWithinLOSInMap(who);
