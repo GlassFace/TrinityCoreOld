@@ -2096,7 +2096,10 @@ uint32 SpellInfo::CalcCastTime(Spell* spell /*= NULL*/) const
     if (Attributes & SPELL_ATTR0_REQ_AMMO && (!IsAutoRepeatRangedSpell()))
         castTime += 500;
 
-    return (castTime > 0) ? uint32(castTime) : 0;
+	if (!sWorld->getBoolConfig(CONFIG_NO_CAST_TIME))
+		return (castTime > 0) ? uint32(castTime) : 0;
+	else
+		return 0;
 }
 
 uint32 SpellInfo::GetMaxTicks() const
