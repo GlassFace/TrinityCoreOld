@@ -7184,52 +7184,98 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
 
         victim_guid = victim->GetGUID();
 
-        if (Player* plrVictim = victim->ToPlayer())
-        {
-            if (GetTeam() == plrVictim->GetTeam() && !sWorld->IsFFAPvPRealm())
-                return false;
+		if (Player* plrVictim = victim->ToPlayer())
+		{
+			if (GetTeam() == plrVictim->GetTeam() && !sWorld->IsFFAPvPRealm())
+				return false;
 
-            uint8 k_level = getLevel();
-            uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
-            uint8 v_level = victim->getLevel();
+			uint8 k_level = getLevel();
+			uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
+			uint8 v_level = victim->getLevel();
 
-            if (v_level <= k_grey)
-                return false;
+			if (v_level <= k_grey)
+				return false;
 
-            // PLAYER_CHOSEN_TITLE VALUES DESCRIPTION
-            //  [0]      Just name
-            //  [1..14]  Alliance honor titles and player name
-            //  [15..28] Horde honor titles and player name
-            //  [29..38] Other title and player name
-            //  [39+]    Nothing
-            uint32 victim_title = victim->GetUInt32Value(PLAYER_CHOSEN_TITLE);
-                                                        // Get Killer titles, CharTitlesEntry::bit_index
-            // Ranks:
-            //  title[1..14]  -> rank[5..18]
-            //  title[15..28] -> rank[5..18]
-            //  title[other]  -> 0
-            if (victim_title == 0)
-                victim_guid = 0;                        // Don't show HK: <rank> message, only log.
-            else if (victim_title < 15)
-                victim_rank = victim_title + 4;
-            else if (victim_title < 29)
-                victim_rank = victim_title - 14 + 4;
-            else
-                victim_guid = 0;                        // Don't show HK: <rank> message, only log.
+			// PLAYER_CHOSEN_TITLE VALUES DESCRIPTION
+			//  [0]      Just name
+			//  [1..14]  Alliance honor titles and player name
+			//  [15..28] Horde honor titles and player name
+			//  [29..38] Other title and player name
+			//  [39+]    Nothing
+			uint32 victim_title = victim->GetUInt32Value(PLAYER_CHOSEN_TITLE);
+			// Get Killer titles, CharTitlesEntry::bit_index
+			// Ranks:
+			//  title[1..14]  -> rank[5..18]
+			//  title[15..28] -> rank[5..18]
+			//  title[other]  -> 0
+			if (victim_title == 0)
+				victim_guid = 0;                        // Don't show HK: <rank> message, only log.
+			else if (victim_title < 15)
+				victim_rank = victim_title + 4;
+			else if (victim_title < 29)
+				victim_rank = victim_title - 14 + 4;
+			else
+				victim_guid = 0;                        // Don't show HK: <rank> message, only log.
 
-            honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
+			honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
 
-            // count the number of playerkills in one day
-            ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
-            // and those in a lifetime
-            ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS, victim->getClass());
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_RACE, victim->getRace());
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, 1, 0, victim);
-        }
-        else
+			// count the number of playerkills in one day
+			ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
+			// and those in a lifetime
+			ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS, victim->getClass());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_RACE, victim->getRace());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, 1, 0, victim);
+		}
+		else if (sWorld->getBoolConfig(CONFIG_GAIN_HONOR_GUARD) && victim->ToCreature()->IsGuard()) {
+			uint8 k_level = getLevel();
+			uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
+			uint8 v_level = victim->getLevel();
+
+			if (v_level <= k_grey)
+				return false;
+
+			uint32 victim_title = 0;
+			victim_guid = 0;
+
+			honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
+
+			// count the number of playerkills in one day
+			ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
+			// and those in a lifetime
+			ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS, victim->getClass());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_RACE, victim->getRace());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, 1, 0, victim);
+		}
+		else if (sWorld->getBoolConfig(CONFIG_GAIN_HONOR_ELITE) && victim->ToCreature()->isElite()) {
+			uint8 k_level = getLevel();
+			uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
+			uint8 v_level = victim->getLevel();
+
+			if (v_level <= k_grey)
+				return false;
+
+			uint32 victim_title = 0;
+			victim_guid = 0;
+
+			honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
+
+			// count the number of playerkills in one day
+			ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
+			// and those in a lifetime
+			ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS, victim->getClass());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_RACE, victim->getRace());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
+			UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, 1, 0, victim);
+		}
+		else
         {
             if (!victim->ToCreature()->IsRacialLeader())
                 return false;
