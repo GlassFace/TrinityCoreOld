@@ -247,9 +247,10 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recvData)
 	{
 		DoLootRelease(lguid);
 
-		// LASYAN: mount
+		// LASYAN: Automount
 		Player *player = GetPlayer();
-		if (player->m_mountCanceled && player->m_mountSpell > 0)
+		GameObject* go = GetPlayer()->GetMap()->GetGameObject(lguid);
+		if (/*go->GetGoType() == GAMEOBJECT_TYPE_CHEST &&*/ player->m_mountCanceled && player->m_mountSpell > 0)
 		{
 			player->CastSpell(player, player->m_mountSpell, true);
 		}

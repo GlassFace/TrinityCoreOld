@@ -1590,7 +1590,9 @@ void WorldSession::HandleCancelMountAuraOpcode(WorldPacket& /*recvData*/)
     }
 
     _player->RemoveAurasByType(SPELL_AURA_MOUNTED); // Calls Dismount()
+	// LASYAN: Automount
 	_player->m_mountCanceled = true;
+	TC_LOG_INFO("lasyan", "MountCanceled from HandleCancelMountAuraOpcode");
 }
 
 void WorldSession::HandleMoveSetCanFlyAckOpcode(WorldPacket& recvData)

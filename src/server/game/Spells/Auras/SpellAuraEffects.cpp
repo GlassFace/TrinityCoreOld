@@ -2532,10 +2532,12 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
         }
 
         target->Mount(displayId, vehicleId, creatureEntry);
+		// LASYAN: Automount
 		if (target->GetTypeId() == TYPEID_PLAYER)
 		{
 			target->ToPlayer()->m_mountSpell = this->GetSpellInfo()->Id;
 			target->ToPlayer()->m_mountCanceled = false;
+			TC_LOG_INFO("lasyan", "Mount back: cancel=%d spell=%d", target->ToPlayer()->m_mountCanceled, target->ToPlayer()->m_mountSpell);
 		}
     }
     else

@@ -165,7 +165,7 @@ void WorldSession::SendDiscoverNewTaxiNode(uint32 nodeid)
 
 void WorldSession::HandleActivateTaxiExpressOpcode (WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_ACTIVATETAXIEXPRESS");
+	TC_LOG_DEBUG("network", "WORLD: Received CMSG_ACTIVATETAXIEXPRESS");
 
     uint64 guid;
     uint32 node_count;
@@ -279,11 +279,19 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& recvData)
     GetPlayer()->SetFallInformation(0, GetPlayer()->GetPositionZ());
     if (GetPlayer()->pvpInfo.IsHostile)
         GetPlayer()->CastSpell(GetPlayer(), 2479, true);
+
+	// LASYAN: Automount
+	Player *player = GetPlayer();
+	TC_LOG_INFO("lasyan", "mvc=%d spell=%d", player->m_mountCanceled, player->m_mountSpell);
+	if (player->m_mountCanceled && player->m_mountSpell > 0)
+	{
+		player->CastSpell(player, player->m_mountSpell, true);
+	}
 }
 
 void WorldSession::HandleActivateTaxiOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_ACTIVATETAXI");
+	TC_LOG_DEBUG("network", "WORLD: Received CMSG_ACTIVATETAXI");
 
     uint64 guid;
     std::vector<uint32> nodes;
