@@ -1106,6 +1106,8 @@ void World::LoadConfigSettings(bool reload)
     m_visibility_notify_periodInInstances = sConfigMgr->GetIntDefault("Visibility.Notify.Period.InInstances",   DEFAULT_VISIBILITY_NOTIFY_PERIOD);
     m_visibility_notify_periodInBGArenas = sConfigMgr->GetIntDefault("Visibility.Notify.Period.InBGArenas",    DEFAULT_VISIBILITY_NOTIFY_PERIOD);
 
+	m_bool_configs[CONFIG_FAST_FISHING] = sConfigMgr->GetBoolDefault("Custom.FastFishing", false);
+
 	m_bool_configs[CONFIG_DROP_QUEST_ITEMS] = sConfigMgr->GetBoolDefault("Custom.AlwaysDropQuestItems", false);
 	m_int_configs[CONFIG_AUTOCOMPLETE_DELAY] = sConfigMgr->GetIntDefault("Custom.AutoCompleteQuestDelay", 120);
 
