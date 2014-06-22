@@ -243,8 +243,17 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recvData)
     recvData >> guid;
 
     if (uint64 lguid = GetPlayer()->GetLootGUID())
-        if (lguid == guid)
-            DoLootRelease(lguid);
+	if (lguid == guid)
+	{
+		DoLootRelease(lguid);
+
+		// LASYAN: mount
+		Player *player = GetPlayer();
+		if (player->m_mountCanceled && player->m_mountSpell > 0)
+		{
+			player->CastSpell(player, player->m_mountSpell, true);
+		}
+	}
 }
 
 void WorldSession::DoLootRelease(uint64 lguid)
