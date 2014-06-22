@@ -16346,7 +16346,7 @@ void Player::ItemAddedQuestCheck(uint32 entry, uint32 count)
                     m_QuestStatusSave[questid] = true;
 
                     SendQuestUpdateAddItem(qInfo, j, additemcount);
-                }
+				}
                 if (CanCompleteQuest(questid))
                     CompleteQuest(questid);
                 return;
@@ -24806,7 +24806,14 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot)
         if (loot->containerID > 0)
             loot->DeleteLootItemFromContainerItemDB(item->itemid);
 
-    }
+		// LASYAN
+		if (MsgQuestItemAdded.size() > 0 && IdQuestItemAdded == item->itemid)
+		{
+			GetSession()->SendNotification(MsgQuestItemAdded.c_str());
+			MsgQuestItemAdded.clear();
+			IdQuestItemAdded = 0;
+		}
+	}
     else
         SendEquipError(msg, NULL, NULL, item->itemid);
 }
