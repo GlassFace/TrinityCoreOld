@@ -1255,7 +1255,22 @@ namespace Trinity
         Unit const* unit;
     };
 
-    class AllGameObjectsWithEntryInRange
+	class AllHostileCreaturesInGrid
+	{
+	public:
+		AllHostileCreaturesInGrid(Unit const* obj) : unit(obj) { }
+		bool operator() (Unit* u)
+		{
+			if (u->IsAlive() && u->IsVisible() && u->IsHostileTo(unit) && !u->IsInCombat())
+				return true;
+
+			return false;
+		}
+	private:
+		Unit const* unit;
+	};
+
+	class AllGameObjectsWithEntryInRange
     {
     public:
         AllGameObjectsWithEntryInRange(const WorldObject* object, uint32 entry, float maxRange) : m_pObject(object), m_uiEntry(entry), m_fRange(maxRange) { }
