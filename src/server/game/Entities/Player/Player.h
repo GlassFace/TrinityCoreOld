@@ -2299,7 +2299,10 @@ class Player : public Unit, public GridObject<Player>
         std::string GetMapAreaAndZoneString();
         std::string GetCoordsMapAreaAndZoneString();
 
-    protected:
+		uint32 m_mountSpell;
+		bool m_mountCanceled;
+
+	protected:
         // Gamemaster whisper whitelist
         WhisperListContainer WhisperList;
         uint32 m_regenTimerCount;

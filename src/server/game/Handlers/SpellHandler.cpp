@@ -404,6 +404,16 @@ void WorldSession::HandleCancelCastOpcode(WorldPacket& recvPacket)
 
     if (_player->IsNonMeleeSpellCast(false))
         _player->InterruptNonMeleeSpells(false, spellId, false);
+
+	// LASYAN: AutoMount
+	/*Spell *_sp = _player->FindCurrentSpellBySpellId(spellId);
+	if (_sp->GetSpellInfo()->Attributes == SPELL_ATTR0_ABILITY && _sp->GetSpellInfo()->AttributesEx4 == SPELL_ATTR4_UNK15)
+	{
+		if (_player->m_mountCanceled && _player->m_mountSpell > 0)
+		{
+			_player->CastSpell(_player, _player->m_mountSpell, true);
+		}
+	}*/
 }
 
 void WorldSession::HandleCancelAuraOpcode(WorldPacket& recvPacket)

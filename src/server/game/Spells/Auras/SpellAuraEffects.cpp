@@ -2532,6 +2532,11 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
         }
 
         target->Mount(displayId, vehicleId, creatureEntry);
+		if (target->GetTypeId() == TYPEID_PLAYER)
+		{
+			target->ToPlayer()->m_mountSpell = this->GetSpellInfo()->Id;
+			target->ToPlayer()->m_mountCanceled = false;
+		}
     }
     else
     {

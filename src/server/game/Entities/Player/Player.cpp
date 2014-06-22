@@ -17772,6 +17772,9 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
 
     _LoadEquipmentSets(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_EQUIPMENT_SETS));
 
+	m_mountSpell = 0;
+	m_mountCanceled = false;
+
     return true;
 }
 
