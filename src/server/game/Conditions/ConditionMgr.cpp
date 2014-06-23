@@ -178,9 +178,12 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
 								while (qInfo->prevQuests.size() > 0)
 								{
 									Quest::PrevQuests::const_iterator iter = qInfo->prevQuests.begin();
+									Quest const * qTemp = sObjectMgr->GetQuestTemplate(*iter);
+									if (qTemp == NULL)
+										break;
 									if (player->GetQuestStatus(*iter) == QUEST_STATUS_REWARDED)
 										break;
-									qInfo = sObjectMgr->GetQuestTemplate(*iter);
+									qInfo = qTemp;
 								}
 
 								msg << "\r\n" << qInfo->GetTitle();
