@@ -28,6 +28,7 @@
 #include "SpellAuras.h"
 #include "SpellMgr.h"
 #include "Spell.h"
+#include "DisableMgr.h"
 
 // Checks if object meets the condition
 // Can have CONDITION_SOURCE_TYPE_NONE && !mReferenceId if called from a special event (ie: eventAI)
@@ -135,6 +136,18 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo)
 					&& status == QUEST_STATUS_NONE){
 					Quest const* qInfo = sObjectMgr->GetQuestTemplate(ConditionValue1);
 					if (!qInfo)
+						break;
+
+					if (!DisableMgr::IsDisabledFor(DISABLE_TYPE_QUEST, qInfo->GetQuestId(), player) && player->SatisfyQuestClass(qInfo, false) && player->SatisfyQuestRace(qInfo, false) &&
+						player->SatisfyQuestSkill(qInfo, false) && player->SatisfyQuestExclusiveGroup(qInfo, false) && player->SatisfyQuestReputation(qInfo, false) &&
+						/*player->SatisfyQuestPreviousQuest(qInfo, false) && player->SatisfyQuestNextChain(qInfo, false) &&*/
+						player->SatisfyQuestPrevChain(qInfo, false) && player->SatisfyQuestDay(qInfo, false) && player->SatisfyQuestWeek(qInfo, false) &&
+						player->SatisfyQuestMonth(qInfo, false) && player->SatisfyQuestSeasonal(qInfo, false))
+					{
+						if (player->getLevel() + sWorld->getIntConfig(CONFIG_QUEST_HIGH_LEVEL_HIDE_DIFF) < qInfo->GetMinLevel())
+							break;
+					}
+					else
 						break;
 
 					if (!qInfo->IsRepeatable() && player->getRewardedQuests().find(ConditionValue1) != player->getRewardedQuests().end())
