@@ -28,6 +28,7 @@
 #include "QuestDef.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "ObjectMgr.h"
 
 #include <string>
 #include <vector>
@@ -1449,6 +1450,10 @@ class Player : public Unit, public GridObject<Player>
         void RemoveTimedQuest(uint32 questId) { m_timedquests.erase(questId); }
 
         bool HasPvPForcingQuest() const;
+
+		bool CanDropQuestItem(uint32 itemid); // LASYAN: AlwaysDropQuestItems
+		ObjectMgr::QuestMap GetAvailableQuestsForItem(uint32 itemid);
+		void GetQuestItemInformations(Quest const *qInfo, std::string& giver_name, std::string& giver_area_name, std::string& giver_zone_name);
 
         /*********************************************************/
         /***                   LOAD SYSTEM                     ***/

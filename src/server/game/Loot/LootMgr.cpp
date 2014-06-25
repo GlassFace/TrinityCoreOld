@@ -375,9 +375,15 @@ LootItem::LootItem(LootStoreItem const& li)
 // Basic checks for player/item compatibility - if false no chance to see the item in the loot
 bool LootItem::AllowedForPlayer(Player const* player) const
 {
+	TC_LOG_DEBUG("lasyan", "AllowedForPlayer - Item %d [%s]", itemid, sObjectMgr->GetItemTemplate(itemid)->Name1.c_str());
+	Player * pl = const_cast<Player*>(player);
+
     // DB conditions check
-    if (!sConditionMgr->IsObjectMeetToConditions(const_cast<Player*>(player), conditions))
-        return false;
+	if (!sConditionMgr->IsObjectMeetToConditions(pl, conditions))
+	{
+		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - IsObjectMeetToConditions --> FALSE");
+		return false;
+	}
 
     ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
     if (!pProto)
@@ -395,8 +401,13 @@ bool LootItem::AllowedForPlayer(Player const* player) const
         return false;
 
     // check quest requirements
-	if (!sWorld->getBoolConfig(CONFIG_DROP_QUEST_ITEMS) && !(pProto->FlagsCu & ITEM_FLAGS_CU_IGNORE_QUEST_STATUS) && ((needs_quest || (pProto->StartQuest && player->GetQuestStatus(pProto->StartQuest) != QUEST_STATUS_NONE)) && !player->HasQuestForItem(itemid)))
+	if (!(pProto->FlagsCu & ITEM_FLAGS_CU_IGNORE_QUEST_STATUS) &&
+		((needs_quest || (pProto->StartQuest && player->GetQuestStatus(pProto->StartQuest) != QUEST_STATUS_NONE)) && !player->HasQuestForItem(itemid)) &&
+		!pl->CanDropQuestItem(itemid))
+	{
+		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - check quest requirements --> FALSE");
 		return false;
+	}
 
     return true;
 }
