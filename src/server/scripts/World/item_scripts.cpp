@@ -412,6 +412,37 @@ public:
     }
 };
 
+/*class item_lootedQuestItems : public ItemScript
+{
+public:
+	item_lootedQuestItems() : ItemScript("item_lootedQuestItems") {}
+
+	bool OnUse(Player* player, Item* item, SpellCastTargets const& targets) // Any hook here
+	{
+		player->PlayerTalkClass->ClearMenus(); // Clears old options
+		player->ADD_GOSSIP_ITEM(0, "Morph", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+		player->ADD_GOSSIP_ITEM(0, "Demorph", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
+		player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, item->GetGUID());
+		return false;
+	}
+
+	void OnGossipSelect(Player* player, Item* item, uint32 sender, uint32 action)
+	{
+		player->PlayerTalkClass->ClearMenus();
+
+		switch (action)
+		{
+		case GOSSIP_ACTION_INFO_DEF + 1:
+			player->SetDisplayId(999);
+			break;
+		case GOSSIP_ACTION_INFO_DEF + 2:
+			player->DeMorph();
+			break;
+		}
+		player->CLOSE_GOSSIP_MENU();
+	}
+};*/
+
 void AddSC_item_scripts()
 {
     new item_only_for_flight();
@@ -425,4 +456,6 @@ void AddSC_item_scripts()
     new item_dehta_trap_smasher();
     new item_trident_of_nazjan();
     new item_captured_frog();
+	//TC_LOG_INFO("lasyan", "item_lootedQuestItems");
+	//new item_lootedQuestItems();
 }

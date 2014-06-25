@@ -18159,6 +18159,18 @@ ObjectMgr::QuestMap Player::GetAvailableQuestsForItem(uint32 itemid)
 			continue;
 		}
 
+		if (qInfo->IsSeasonal())
+		{
+			TC_LOG_DEBUG("lasyan", " |- Quest is seasonal");
+			continue;
+		}
+
+		if (qInfo->IsDailyOrWeekly())
+		{
+			TC_LOG_DEBUG("lasyan", " |- Quest is daily or weekly");
+			continue;
+		}
+
 		if (!DisableMgr::IsDisabledFor(DISABLE_TYPE_QUEST, qInfo->GetQuestId(), this) && SatisfyQuestClass(qInfo, false) && SatisfyQuestRace(qInfo, false) &&
 			SatisfyQuestSkill(qInfo, false) && SatisfyQuestExclusiveGroup(qInfo, false) && SatisfyQuestReputation(qInfo, false) &&
 			/*SatisfyQuestPreviousQuest(qInfo, false) && SatisfyQuestNextChain(qInfo, false) &&*/
@@ -18202,6 +18214,15 @@ void Player::GetQuestItemInformations(Quest const *qInfo, std::string& giver_nam
 		<< " INNER JOIN creature_template ct ON ct.entry = c.id"
 		<< " WHERE s.quest = %d";
 	QueryResult result = WorldDatabase.PQuery(sql.str().c_str(), qInfo->GetQuestId());
+	if (!result || result->GetRowCount() == 0)
+	{
+		std::ostringstream sql2;
+		sql2 << "SELECT gt.name, g.map, g.position_x, g.position_y, g.position_z FROM gameobject g"
+			<< " INNER JOIN gameobject_queststarter s ON s.id = g.id"
+			<< " INNER JOIN gameobject_template gt ON gt.entry = g.id"
+			<< " WHERE s.quest = " << qInfo->GetQuestId();
+		result = WorldDatabase.Query(sql2.str().c_str());
+	}
 	if (result && result->GetRowCount() > 0)
 	{
 		giver_name = (*result)[0].GetString();
