@@ -1436,6 +1436,7 @@ void AddBattlegroundScripts()
 
 #ifdef SCRIPTS
 /* This is where custom scripts' loading functions should be declared. */
+void AddSC_item_lootedQuestItems();
 //Bots
 void AddSC_death_knight_bot();
 void AddSC_druid_bot();
@@ -1451,13 +1452,13 @@ void AddSC_script_bot_commands();
 //advanced
 void AddSC_BotQuests_chapter1();
 //end Bots
-
 #endif
 
 void AddCustomScripts()
 {
 #ifdef SCRIPTS
     /* This is where custom scripts should be added. */
+	AddSC_item_lootedQuestItems();
     //Bots
     AddSC_death_knight_bot();
     AddSC_druid_bot();
@@ -1473,6 +1474,5 @@ void AddCustomScripts()
     //advanced
     AddSC_BotQuests_chapter1();
     //end Bots
-
 #endif
 }
