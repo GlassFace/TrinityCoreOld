@@ -283,17 +283,33 @@ void LootStore::ReportNotExistedId(uint32 id) const
 // RATE_DROP_ITEMS is no longer used for all types of entries
 bool LootStoreItem::Roll(bool rate) const
 {
-    if (chance >= 100.0f)
+	float _chance;
+	// LASYAN : apply minimum drop rate for rare items
+	ItemTemplate const * _it = sObjectMgr->GetItemTemplate(itemid);
+	switch (_it->Quality)
+	{
+		case ITEM_QUALITY_RARE: 
+			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
+		case ITEM_QUALITY_EPIC: 
+			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC) : chance; break; break;
+		case ITEM_QUALITY_LEGENDARY: 
+			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND) : chance; break; break;
+		case ITEM_QUALITY_ARTIFACT: 
+			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART) : chance; break; break;
+		default: _chance = chance; break;
+	}
+
+	if (_chance >= 100.0f)
         return true;
 
     if (mincountOrRef < 0)                                   // reference case
-        return roll_chance_f(chance* (rate ? sWorld->getRate(RATE_DROP_ITEM_REFERENCED) : 1.0f));
+		return roll_chance_f(_chance* (rate ? sWorld->getRate(RATE_DROP_ITEM_REFERENCED) : 1.0f));
 
     ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
 
     float qualityModifier = pProto && rate ? sWorld->getRate(qualityToRate[pProto->Quality]) : 1.0f;
 
-    return roll_chance_f(chance*qualityModifier);
+	return roll_chance_f(_chance*qualityModifier);
 }
 
 // Checks correctness of values
@@ -375,45 +391,66 @@ LootItem::LootItem(LootStoreItem const& li)
 // Basic checks for player/item compatibility - if false no chance to see the item in the loot
 bool LootItem::AllowedForPlayer(Player const* player) const
 {
-	// LASYAN
-	InventoryResult _ir = player->CanUseItem(sObjectMgr->GetItemTemplate(itemid));
-	if (_ir == EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM || _ir == EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM2 || _ir == EQUIP_ERR_CANT_EQUIP_SKILL )
+	ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
+	if (!pProto)
+	{
+		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - Item %d not recognized!", itemid);
 		return false;
+	}
+
+	TC_LOG_DEBUG("lasyan", "AllowedForPlayer - Loot %d [%s]", itemid, pProto->Name1.c_str());
+
+	Player * pl = const_cast<Player*>(player);
 
 	Player * pl = const_cast<Player*>(player);
 	
 	// DB conditions check
 	if (!sConditionMgr->IsObjectMeetToConditions(pl, conditions))
 	{
-		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - IsObjectMeetToConditions --> FALSE");
+		TC_LOG_DEBUG("lasyan", "IsObjectMeetToConditions --> FALSE");
 		return false;
 	}
 
-    ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
-    if (!pProto)
-        return false;
+	// LASYAN
+	InventoryResult _ir = player->CanUseItem(pProto);
+	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) &&
+		_ir != EQUIP_ERR_CANT_EQUIP_LEVEL_I || _ir != EQUIP_ERR_OK)
+	{
+		TC_LOG_DEBUG("lasyan", "Player cannot use item!");
+		return false;
+	}
 
-    // not show loot for players without profession or those who already know the recipe
-    if ((pProto->Flags & ITEM_PROTO_FLAG_SMART_LOOT) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
-        return false;
+	// not show loot for players without profession or those who already know the recipe
+	if ((pProto->Class == ITEM_CLASS_RECIPE) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
+	{
+		TC_LOG_DEBUG("lasyan", "Player does not have the profession for this item, or alread know the recipe!");
+		return false;
+	}
 
-    // not show loot for not own team
-    if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
-        return false;
+	// not show loot for not own team
+	if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
+	{
+		TC_LOG_DEBUG("lasyan", "This item is only for the Horde!");
+		return false;
+	}
 
-    if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_ALLIANCE_ONLY) && player->GetTeam() != ALLIANCE)
-        return false;
+	if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_ALLIANCE_ONLY) && player->GetTeam() != ALLIANCE)
+	{
+		TC_LOG_DEBUG("lasyan", "This item is only for the Alliance!");
+		return false;
+	}
 
-    // check quest requirements
+	// check quest requirements
 	if (!(pProto->FlagsCu & ITEM_FLAGS_CU_IGNORE_QUEST_STATUS) &&
 		((needs_quest || (pProto->StartQuest && player->GetQuestStatus(pProto->StartQuest) != QUEST_STATUS_NONE)) && !player->HasQuestForItem(itemid)) &&
 		!pl->CanDropQuestItem(itemid))
 	{
-		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - check quest requirements --> FALSE");
+		TC_LOG_DEBUG("lasyan", "Check quest requirements --> FALSE");
 		return false;
 	}
 
-    return true;
+	TC_LOG_DEBUG("lasyan", "Loot allowed for %s", pProto->Name1.c_str());
+	return true;
 }
 
 void LootItem::AddAllowedLooter(const Player* player)

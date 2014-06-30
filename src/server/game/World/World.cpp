@@ -1108,8 +1108,12 @@ void World::LoadConfigSettings(bool reload)
 
 	m_float_configs[CONFIG_RESPAWNSPEED] = sConfigMgr->GetFloatDefault("Custom.RespawnSpeed", 1.0f);
 	m_bool_configs[CONFIG_NO_GREY_AGGRO] = sConfigMgr->GetBoolDefault("Custom.NoGreyAggro", false);
-	m_float_configs[CONFIG_LOOT_ONLY_FOR_PLAYER] = sConfigMgr->GetBoolDefault("Custom.LootOnlyForPlayer", false);
-	
+	m_bool_configs[CONFIG_LOOT_ONLY_FOR_PLAYER] = sConfigMgr->GetBoolDefault("Custom.LootOnlyForPlayer", false);
+	m_float_configs[CONFIG_MINRATE_DROP_ITEM_RARE] = sConfigMgr->GetFloatDefault("Custom.MinimumRate.Drop.Item.Rare", 1);
+	m_float_configs[CONFIG_MINRATE_DROP_ITEM_EPIC] = sConfigMgr->GetFloatDefault("Custom.MinimumRate.Drop.Item.Rare", 1);
+	m_float_configs[CONFIG_MINRATE_DROP_ITEM_LEGEND] = sConfigMgr->GetFloatDefault("Custom.MinimumRate.Drop.Item.Rare", 1);
+	m_float_configs[CONFIG_MINRATE_DROP_ITEM_ART] = sConfigMgr->GetFloatDefault("Custom.MinimumRate.Drop.Item.Rare", 1);
+
 
 	m_bool_configs[CONFIG_GAIN_HONOR_GUARD] = sConfigMgr->GetBoolDefault("Custom.GainHonorOnGuardKill", false);
 	m_bool_configs[CONFIG_GAIN_HONOR_ELITE] = sConfigMgr->GetBoolDefault("Custom.GainHonorOnEliteKill", false);
