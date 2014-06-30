@@ -224,12 +224,12 @@ void bot_minion_ai::_calculatePos(Position& pos)
     uint8 followdist = master->GetBotFollowDist();
     float mydist, angle;
 
-    if (IsTank())
+    /*if (IsTank())
     {
         mydist = frand(3.5f, 6.5f); //stand a bit farther
         angle = (M_PI/2.f) / 16.f * frand(-3.f, 3.f); //in front +-pi/5
     }
-    else if (IsMelee())
+    else*/ if (IsMelee())
     {
         mydist = frand(0.2f, 1.f);
         angle = (M_PI/2.f) / 8.f * RAND(frand(5.f, 10.f), frand(-10.f, -5.f)); //to the sides +-(pi/3 to pi/1.6)
