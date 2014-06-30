@@ -375,10 +375,14 @@ LootItem::LootItem(LootStoreItem const& li)
 // Basic checks for player/item compatibility - if false no chance to see the item in the loot
 bool LootItem::AllowedForPlayer(Player const* player) const
 {
-	TC_LOG_DEBUG("lasyan", "AllowedForPlayer - Item %d [%s]", itemid, sObjectMgr->GetItemTemplate(itemid)->Name1.c_str());
-	Player * pl = const_cast<Player*>(player);
+	// LASYAN
+	InventoryResult _ir = player->CanUseItem(sObjectMgr->GetItemTemplate(itemid));
+	if (_ir == EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM || _ir == EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM2 || _ir == EQUIP_ERR_CANT_EQUIP_SKILL )
+		return false;
 
-    // DB conditions check
+	Player * pl = const_cast<Player*>(player);
+	
+	// DB conditions check
 	if (!sConditionMgr->IsObjectMeetToConditions(pl, conditions))
 	{
 		TC_LOG_DEBUG("lasyan", "AllowedForPlayer - IsObjectMeetToConditions --> FALSE");

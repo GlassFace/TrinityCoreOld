@@ -1108,6 +1108,8 @@ void World::LoadConfigSettings(bool reload)
 
 	m_float_configs[CONFIG_RESPAWNSPEED] = sConfigMgr->GetFloatDefault("Custom.RespawnSpeed", 1.0f);
 	m_bool_configs[CONFIG_NO_GREY_AGGRO] = sConfigMgr->GetBoolDefault("Custom.NoGreyAggro", false);
+	m_float_configs[CONFIG_LOOT_ONLY_FOR_PLAYER] = sConfigMgr->GetBoolDefault("Custom.LootOnlyForPlayer", false);
+	
 
 	m_bool_configs[CONFIG_GAIN_HONOR_GUARD] = sConfigMgr->GetBoolDefault("Custom.GainHonorOnGuardKill", false);
 	m_bool_configs[CONFIG_GAIN_HONOR_ELITE] = sConfigMgr->GetBoolDefault("Custom.GainHonorOnEliteKill", false);
@@ -1125,7 +1127,7 @@ void World::LoadConfigSettings(bool reload)
 	m_float_configs[CONFIG_ATTACKSPEED_PLAYER] = sConfigMgr->GetFloatDefault("Custom.AttackSpeedForPlayer", 1.0f);
 	m_float_configs[CONFIG_ATTACKSPEED_ALL] = sConfigMgr->GetFloatDefault("Custom.AttackSpeedForMobs", 1.0f);
 
-    ///- Load the CharDelete related config options
+	///- Load the CharDelete related config options
     m_int_configs[CONFIG_CHARDELETE_METHOD] = sConfigMgr->GetIntDefault("CharDelete.Method", 0);
     m_int_configs[CONFIG_CHARDELETE_MIN_LEVEL] = sConfigMgr->GetIntDefault("CharDelete.MinLevel", 0);
     m_int_configs[CONFIG_CHARDELETE_HEROIC_MIN_LEVEL] = sConfigMgr->GetIntDefault("CharDelete.Heroic.MinLevel", 0);
