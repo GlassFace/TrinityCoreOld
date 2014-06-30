@@ -18201,6 +18201,7 @@ ObjectMgr::QuestMap Player::GetAvailableQuestsForItem(uint32 itemid)
 		}
 
 		_allQuests[questid] = const_cast<Quest*>(qInfo);
+		TC_LOG_DEBUG("lasyan", " |- Quest is VALIDATED", status);
 	} while (result->NextRow());
 	TC_LOG_DEBUG("lasyan", "END GetAvailableQuestsForItem");
 	return _allQuests;
