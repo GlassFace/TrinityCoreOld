@@ -309,20 +309,17 @@ bool LootStoreItem::Roll(bool rate) const
 
 	float qualityModifier = pProto && rate ? sWorld->getRate(qualityToRate[pProto->Quality]) : 1.0f;
 
+	float _rate;
 	switch (pProto->Quality)
 	{
-	case ITEM_QUALITY_UNCOMMON:
-		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_UNCOMMON)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_UNCOMMON) : chance; break;
-	case ITEM_QUALITY_RARE:
-		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
-	case ITEM_QUALITY_EPIC:
-		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC) : chance; break;
-	case ITEM_QUALITY_LEGENDARY:
-		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND) : chance; break;
-	case ITEM_QUALITY_ARTIFACT:
-		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART) : chance; break;
-	default: _chance = chance; break;
+		case ITEM_QUALITY_UNCOMMON: _rate = sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_UNCOMMON); break;
+		case ITEM_QUALITY_RARE: _rate = sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE); break;
+		case ITEM_QUALITY_EPIC: _rate = sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC); break;
+		case ITEM_QUALITY_LEGENDARY: _rate = sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND); break;
+		case ITEM_QUALITY_ARTIFACT: _rate = sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART); break;
+		default: _rate = 0; break;
 	}
+	_chance = (chance < _rate && _rate > 0) ? _rate : chance;
 
 	return roll_chance_f(_chance*qualityModifier);
 }
@@ -425,29 +422,112 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 	}
 
 	// LASYAN
-	InventoryResult _ir = player->CanUseItem(pProto);
-	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) &&
-		_ir != EQUIP_ERR_CANT_EQUIP_LEVEL_I || _ir != EQUIP_ERR_OK)
+	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) && (pProto->Class == ITEM_CLASS_ARMOR || pProto->Class == ITEM_CLASS_WEAPON))
 	{
-		TC_LOG_DEBUG("lasyan", "Player cannot use item!");
-		TC_LOG_INFO("lasyan", "%s cannot be used by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
-		return false;
+		const static uint32 item_weapon_skills[MAX_ITEM_SUBCLASS_WEAPON] =
+		{
+			SKILL_AXES, SKILL_2H_AXES, SKILL_BOWS, SKILL_GUNS, SKILL_MACES,
+			SKILL_2H_MACES, SKILL_POLEARMS, SKILL_SWORDS, SKILL_2H_SWORDS, 0,
+			SKILL_STAVES, 0, 0, SKILL_FIST_WEAPONS, 0,
+			SKILL_DAGGERS, SKILL_THROWN, SKILL_ASSASSINATION, SKILL_CROSSBOWS, SKILL_WANDS,
+			SKILL_FISHING
+		};
+
+		const static uint32 item_armor_skills[MAX_ITEM_SUBCLASS_ARMOR] =
+		{
+			0, SKILL_CLOTH, SKILL_LEATHER, SKILL_MAIL, SKILL_PLATE_MAIL, 0, SKILL_SHIELD, 0, 0, 0, 0
+		};
+
+		InventoryResult _ir = player->CanUseItem(pProto);
+		if (_ir != EQUIP_ERR_CANT_EQUIP_LEVEL_I && _ir != EQUIP_ERR_OK)
+		{
+			TC_LOG_INFO("lasyan", "Loot cannot be used by player %s (OTHER=%d) : %s", player->GetName().c_str(), _ir, pProto->Name1.c_str());
+			return false;
+		}
+
+		uint32 itemSkill;
+		switch (pProto->Class)
+		{
+		case ITEM_CLASS_WEAPON:
+			if (pProto->SubClass >= MAX_ITEM_SUBCLASS_WEAPON)
+				itemSkill = 0;
+			else
+				itemSkill = item_weapon_skills[pProto->SubClass];
+			break;
+
+		case ITEM_CLASS_ARMOR:
+			if (pProto->SubClass >= MAX_ITEM_SUBCLASS_ARMOR)
+				itemSkill = 0;
+			else
+				itemSkill = item_armor_skills[pProto->SubClass];
+			break;
+
+		default:
+			itemSkill = 0;
+		}
+
+		if (itemSkill != 0)
+		{
+			bool allowEquip = false;
+			// Armor that is binded to account can "morph" from plate to mail, etc. if skill is not learned yet.
+			if (pProto->Quality == ITEM_QUALITY_HEIRLOOM && pProto->Class == ITEM_CLASS_ARMOR && !player->HasSkill(itemSkill))
+			{
+				/// @todo when you right-click already equipped item it throws EQUIP_ERR_NO_REQUIRED_PROFICIENCY.
+
+				// In fact it's a visual bug, everything works properly... I need sniffs of operations with
+				// binded to account items from off server.
+
+				switch (player->getClass())
+				{
+				case CLASS_HUNTER:
+				case CLASS_SHAMAN:
+					allowEquip = (itemSkill == SKILL_MAIL);
+					break;
+				case CLASS_PALADIN:
+				case CLASS_WARRIOR:
+					allowEquip = (itemSkill == SKILL_PLATE_MAIL);
+					break;
+				}
+			}
+			if (!allowEquip && player->GetSkillValue(itemSkill) == 0)
+			{
+				TC_LOG_INFO("lasyan", "Loot cannot be equip by player %s: %s", player->GetName().c_str(), pProto->Name1.c_str());
+				return false;
+			}
+		}
+
+		if (pProto->RequiredReputationFaction && uint32(player->GetReputationRank(pProto->RequiredReputationFaction)) < pProto->RequiredReputationRank)
+		{
+			TC_LOG_INFO("lasyan", "Loot cannot be used by player %s (REPUTATION) : %s", player->GetName().c_str(), pProto->Name1.c_str());
+			return false;
+		}
+
+		/*InventoryResult _ir = player->CanUseItem(pProto);
+		TC_LOG_DEBUG("lasyan", "%d", _ir);
+		if (_ir != EQUIP_ERR_CANT_EQUIP_LEVEL_I && _ir != EQUIP_ERR_OK)
+		{
+			TC_LOG_DEBUG("lasyan", "Player cannot use item!");
+			TC_LOG_INFO("lasyan", "%s cannot be used by player %s! (EQUIP)", pProto->Name1.c_str(), player->GetName().c_str());
+			return false;
+		}*/
 	}
 
 	// not show loot for players without profession or those who already know the recipe
-	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) && 
-		(pProto->Class == ITEM_CLASS_RECIPE) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
+	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) && pProto->Class == ITEM_CLASS_RECIPE)
 	{
-		TC_LOG_DEBUG("lasyan", "Player does not have the profession for this item, or alread know the recipe!");
-		if (!player->HasSkill(pProto->RequiredSkill))
-			TC_LOG_INFO("lasyan", "%s cannot be used by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
-		else if (player->HasSpell(pProto->Spells[1].SpellId))
-			TC_LOG_INFO("lasyan", "%s is already known by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
-		return false;
+		if (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId))
+		{
+			TC_LOG_DEBUG("lasyan", "Player does not have the profession for this item, or alread know the recipe!");
+			if (!player->HasSkill(pProto->RequiredSkill))
+				TC_LOG_INFO("lasyan", "Recipe cannot be used by player %s: %s", player->GetName().c_str(), pProto->Name1.c_str());
+			else if (player->HasSpell(pProto->Spells[1].SpellId))
+				TC_LOG_INFO("lasyan", "Recipe is already known by player %s: %s", player->GetName().c_str(), pProto->Name1.c_str());
+			return false;
+		}
 	}
 
 	// not show loot for not own team
-	if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
+	/*if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
 	{
 		TC_LOG_DEBUG("lasyan", "This item is only for the Horde!");
 		TC_LOG_INFO("lasyan", "%s is only for the Horde!", pProto->Name1.c_str());
@@ -459,7 +539,7 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 		TC_LOG_DEBUG("lasyan", "This item is only for the Alliance!");
 		TC_LOG_INFO("lasyan", "%s is only for the Alliance!", pProto->Name1.c_str());
 		return false;
-	}
+	}*/
 
 	// check quest requirements
 	if (!(pProto->FlagsCu & ITEM_FLAGS_CU_IGNORE_QUEST_STATUS) && ((needs_quest || (pProto->StartQuest && player->GetQuestStatus(pProto->StartQuest) != QUEST_STATUS_NONE)) && !player->HasQuestForItem(itemid)))
