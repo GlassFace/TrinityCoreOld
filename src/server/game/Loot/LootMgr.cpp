@@ -419,7 +419,8 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 	}
 
 	// not show loot for players without profession or those who already know the recipe
-	if ((pProto->Class == ITEM_CLASS_RECIPE) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
+	if (sWorld->getBoolConfig(CONFIG_LOOT_ONLY_FOR_PLAYER) && 
+		(pProto->Class == ITEM_CLASS_RECIPE) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
 	{
 		TC_LOG_DEBUG("lasyan", "Player does not have the profession for this item, or alread know the recipe!");
 		return false;
