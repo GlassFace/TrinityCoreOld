@@ -311,6 +311,8 @@ bool LootStoreItem::Roll(bool rate) const
 
 	switch (pProto->Quality)
 	{
+	case ITEM_QUALITY_UNCOMMON:
+		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_UNCOMMON)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_UNCOMMON) : chance; break;
 	case ITEM_QUALITY_RARE:
 		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
 	case ITEM_QUALITY_EPIC:
@@ -428,6 +430,7 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 		_ir != EQUIP_ERR_CANT_EQUIP_LEVEL_I || _ir != EQUIP_ERR_OK)
 	{
 		TC_LOG_DEBUG("lasyan", "Player cannot use item!");
+		TC_LOG_INFO("lasyan", "%s cannot be used by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
 		return false;
 	}
 
@@ -436,6 +439,10 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 		(pProto->Class == ITEM_CLASS_RECIPE) && (!player->HasSkill(pProto->RequiredSkill) || player->HasSpell(pProto->Spells[1].SpellId)))
 	{
 		TC_LOG_DEBUG("lasyan", "Player does not have the profession for this item, or alread know the recipe!");
+		if (!player->HasSkill(pProto->RequiredSkill))
+			TC_LOG_INFO("lasyan", "%s cannot be used by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
+		else if (player->HasSpell(pProto->Spells[1].SpellId))
+			TC_LOG_INFO("lasyan", "%s is already known by player %s!", pProto->Name1.c_str(), player->GetName().c_str());
 		return false;
 	}
 
@@ -443,12 +450,14 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 	if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
 	{
 		TC_LOG_DEBUG("lasyan", "This item is only for the Horde!");
+		TC_LOG_INFO("lasyan", "%s is only for the Horde!", pProto->Name1.c_str());
 		return false;
 	}
 
 	if ((pProto->Flags2 & ITEM_FLAGS_EXTRA_ALLIANCE_ONLY) && player->GetTeam() != ALLIANCE)
 	{
 		TC_LOG_DEBUG("lasyan", "This item is only for the Alliance!");
+		TC_LOG_INFO("lasyan", "%s is only for the Alliance!", pProto->Name1.c_str());
 		return false;
 	}
 
