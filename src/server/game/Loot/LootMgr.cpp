@@ -417,8 +417,6 @@ bool LootItem::AllowedForPlayer(Player const* player) const
 
 	Player * pl = const_cast<Player*>(player);
 
-	Player * pl = const_cast<Player*>(player);
-	
 	// DB conditions check
 	if (!sConditionMgr->IsObjectMeetToConditions(pl, conditions))
 	{
