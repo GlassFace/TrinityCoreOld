@@ -283,31 +283,44 @@ void LootStore::ReportNotExistedId(uint32 id) const
 // RATE_DROP_ITEMS is no longer used for all types of entries
 bool LootStoreItem::Roll(bool rate) const
 {
-	float _chance;
+	float _chance = chance;
 	// LASYAN : apply minimum drop rate for rare items
-	ItemTemplate const * _it = sObjectMgr->GetItemTemplate(itemid);
-	switch (_it->Quality)
+	/*ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
+	switch (pProto->Quality)
 	{
-		case ITEM_QUALITY_RARE: 
-			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
-		case ITEM_QUALITY_EPIC: 
-			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC) : chance; break; break;
-		case ITEM_QUALITY_LEGENDARY: 
-			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND) : chance; break; break;
-		case ITEM_QUALITY_ARTIFACT: 
-			_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART) : chance; break; break;
-		default: _chance = chance; break;
-	}
+	case ITEM_QUALITY_RARE:
+	_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
+	case ITEM_QUALITY_EPIC:
+	_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC) : chance; break;
+	case ITEM_QUALITY_LEGENDARY:
+	_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND) : chance; break;
+	case ITEM_QUALITY_ARTIFACT:
+	_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART) : chance; break;
+	default: _chance = chance; break;
+	}*/
 
 	if (_chance >= 100.0f)
-        return true;
+		return true;
 
-    if (mincountOrRef < 0)                                   // reference case
+	if (mincountOrRef < 0)                                   // reference case
 		return roll_chance_f(_chance* (rate ? sWorld->getRate(RATE_DROP_ITEM_REFERENCED) : 1.0f));
 
-    ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
+	ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemid);
 
-    float qualityModifier = pProto && rate ? sWorld->getRate(qualityToRate[pProto->Quality]) : 1.0f;
+	float qualityModifier = pProto && rate ? sWorld->getRate(qualityToRate[pProto->Quality]) : 1.0f;
+
+	switch (pProto->Quality)
+	{
+	case ITEM_QUALITY_RARE:
+		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_RARE) : chance; break;
+	case ITEM_QUALITY_EPIC:
+		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_EPIC) : chance; break;
+	case ITEM_QUALITY_LEGENDARY:
+		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_LEGEND) : chance; break;
+	case ITEM_QUALITY_ARTIFACT:
+		_chance = (chance < sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART)) ? sWorld->getFloatConfig(CONFIG_MINRATE_DROP_ITEM_ART) : chance; break;
+	default: _chance = chance; break;
+	}
 
 	return roll_chance_f(_chance*qualityModifier);
 }
