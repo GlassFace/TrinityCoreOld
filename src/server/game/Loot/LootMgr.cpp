@@ -754,6 +754,11 @@ QuestItemList* Loot::FillNonQuestNonFFAConditionalLoot(Player* player, bool pres
                 }
             }
         }
+        else
+        {
+            --unlootedCount;
+            item.is_counted = false;
+        }
     }
     if (ql->empty())
     {
